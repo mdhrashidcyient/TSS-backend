@@ -22,16 +22,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import com.example.after_market_db_tool.entity.UserEntity;
 import com.example.after_market_db_tool.entity.VerificationToken;
 import com.example.after_market_db_tool.model.CreateUserRequest;
 import com.example.after_market_db_tool.model.LoginRequest;
 import com.example.after_market_db_tool.model.LoginResponse;
+import com.example.after_market_db_tool.model.OtpRequest;
 import com.example.after_market_db_tool.repository.UserRepository;
 import com.example.after_market_db_tool.repository.VerificationRepository;
 import com.example.after_market_db_tool.security.SecurityUtils;
 import com.example.after_market_db_tool.service.JwtService;
+import com.example.after_market_db_tool.service.OtpService;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -39,137 +40,182 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "http://localhost:51648")
 public class AuthController {
-	
-	  @Value("${admin.email}")
-	    private String adminEmail;
 
-    @Autowired private UserRepository userRepo;
-    @Autowired private VerificationRepository tokenRepo;
-    @Autowired private JavaMailSender mailSender;
-    @Autowired private AuthenticationManager authenticationManager;
-    @Autowired private JwtService jwtService;
+	@Value("${admin.email}")
+	private String adminEmail;
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody CreateUserRequest req, HttpServletRequest servletRequest) {
-        if (userRepo.existsByEmail(req.getEmail())) {
-            return ResponseEntity.badRequest().body("Email already in use.");
-        }
-        
-        String hashedPw= SecurityUtils.saltAndHashPassword(req.getPassword());
+	@Autowired
+	private UserRepository userRepo;
+	@Autowired
+	private VerificationRepository tokenRepo;
+	@Autowired
+	private JavaMailSender mailSender;
+	@Autowired
+	private AuthenticationManager authenticationManager;
+	@Autowired
+	private JwtService jwtService;
+	@Autowired
+	private OtpService otpService;
 
-        UserEntity user = new UserEntity();
-        user.setFirstName(req.getFirstName());
-        user.setLastName(req.getLastName());
-        user.setEmail(req.getEmail());
-        user.setPhoneNumber(req.getPhoneNumber());
-        user.setCompanyName(req.getCompanyName());
-        user.setRole(req.getRole());
-        user.setVendorCode(req.getVendorCode());
-        user.setPassword(hashedPw);
-        user.setEnabled(false);
-        userRepo.save(user);
+	@PostMapping("/register")
+	public ResponseEntity<?> register(@RequestBody CreateUserRequest req, HttpServletRequest servletRequest) {
+		if (userRepo.existsByEmail(req.getEmail())) {
+			return ResponseEntity.badRequest().body("Email already in use.");
+		}
 
-        // Create token
-        String jwtToekn = jwtService.generateToken(req.getEmail());
-        VerificationToken verificationToken = new VerificationToken();
-        verificationToken.setToken(jwtToekn);
-        verificationToken.setUser(user);
-        verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
-        tokenRepo.save(verificationToken);
+		String hashedPw = SecurityUtils.saltAndHashPassword(req.getPassword());
 
-        // Build confirmation URL
-        String appUrl = servletRequest.getRequestURL().toString().replace(servletRequest.getRequestURI(), "");
-        String confirmUrl = appUrl + "/api/auth/confirm?token=" + jwtToekn;
+		UserEntity user = new UserEntity();
+		user.setFirstName(req.getFirstName());
+		user.setLastName(req.getLastName());
+		user.setEmail(req.getEmail());
+		user.setPhoneNumber(req.getPhoneNumber());
+		user.setCompanyName(req.getCompanyName());
+		user.setRole(req.getRole());
+		user.setVendorCode(req.getVendorCode());
+		user.setPassword(hashedPw);
+		user.setEnabled(false);
+		userRepo.save(user);
 
-        // Send email
-        sendEmail(user.getEmail(), confirmUrl);
+		// Create token
+		String jwtToekn = jwtService.generateToken(req.getEmail());
+		VerificationToken verificationToken = new VerificationToken();
+		verificationToken.setToken(jwtToekn);
+		verificationToken.setUser(user);
+		verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+		tokenRepo.save(verificationToken);
 
-        return ResponseEntity.ok("Registration successful. Check your email to confirm.");
-    }
+		// Build confirmation URL
+		String appUrl = servletRequest.getRequestURL().toString().replace(servletRequest.getRequestURI(), "");
+		String confirmUrl = appUrl + "/api/auth/confirm?token=" + jwtToekn;
 
-    private void sendEmail(String to, String confirmUrl) {
-        SimpleMailMessage mail = new SimpleMailMessage();
-        mail.setTo(to);
-        mail.setSubject("Confirm your email");
-        mail.setText("Click to confirm: " + confirmUrl);
-        mailSender.send(mail);
-    }
-    
-    @GetMapping("/confirm")
-    public ResponseEntity<String> confirm(@RequestParam String token) {
-        VerificationToken vt = tokenRepo.findByToken(token)
-            .orElseThrow(() -> new RuntimeException("Invalid token"));
+		// Send email
+		sendEmail(user.getEmail(), confirmUrl);
 
-        if (vt.getExpiryDate().isBefore(LocalDateTime.now())) {
-            return ResponseEntity.badRequest().body("Token expired.");
-        }
+		return ResponseEntity.ok("Registration successful. Check your email to confirm.");
+	}
 
-        UserEntity user = vt.getUser();
-        //user.setEnabled(false);
-        //userRepo.save(user);
-        sendEmailToAdmin(adminEmail,user.getEmail());
-        tokenRepo.delete(vt);
+	private void sendEmail(String to, String confirmUrl) {
+		SimpleMailMessage mail = new SimpleMailMessage();
+		mail.setTo(to);
+		mail.setSubject("Confirm your email");
+		mail.setText("Click to confirm: " + confirmUrl);
+		mailSender.send(mail);
+	}
 
-        return ResponseEntity.ok("Email confirmed. Awaiting for Admin approval.");
-    }
-    
-    
-    
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        try {
-        	// Authenticate the user
+	@GetMapping("/confirm")
+	public ResponseEntity<String> confirm(@RequestParam String token) {
+		VerificationToken vt = tokenRepo.findByToken(token).orElseThrow(() -> new RuntimeException("Invalid token"));
+
+		if (vt.getExpiryDate().isBefore(LocalDateTime.now())) {
+			return ResponseEntity.badRequest().body("Token expired.");
+		}
+
+		UserEntity user = vt.getUser();
+		// user.setEnabled(false);
+		// userRepo.save(user);
+		sendEmailToAdmin(adminEmail, user.getEmail());
+		tokenRepo.delete(vt);
+
+		return ResponseEntity.ok("Email confirmed. Awaiting for Admin approval.");
+	}
+
+	@PostMapping("/login")
+	public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+		try {
+			// Authenticate the user
 //            Authentication authentication = authenticationManager.authenticate(
 //                new UsernamePasswordAuthenticationToken(
 //                    request.getEmail(), request.getPassword()
 //                )
 //            );
-        	
-        	LoginResponse response = new LoginResponse();
 
-            UserEntity user = userRepo.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+			LoginResponse response = new LoginResponse();
 
-            if (!user.isEnabled()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Please confirm your email first.");
-            }
-            
-            if(!SecurityUtils.verifyPasssword(request.getPassword(), user.getPassword())) {
-            	response.setIsSuccess(Boolean.FALSE);
-            	response.setErrorMessage("Incorrect Password");
-            	return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-            //String jwt = jwtService.generateToken(authentication.getName());
-            String jwtToken = jwtService.generateToken(request.getEmail());
-            
-            LoginResponse loginResponse = convert(user,jwtToken);
+			UserEntity user = userRepo.findByEmail(request.getEmail())
+					.orElseThrow(() -> new RuntimeException("User not found"));
 
-            return ResponseEntity.ok(loginResponse);
+			if (!user.isEnabled()) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please confirm your email first.");
+			}
 
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
-        }
-    }
-    
-    private LoginResponse convert(UserEntity user, String jwtToken) {
-    	LoginResponse response = new LoginResponse();
-    	CreateUserRequest userResponse = new CreateUserRequest();
-    	userResponse.setFirstName(user.getFirstName());
-    	userResponse.setLastName(user.getLastName());
-    	userResponse.setRole(user.getRole());
-    	userResponse.setVendorCode(user.getVendorCode());
-    	response.setToken(jwtToken);
-    	response.setIsSuccess(Boolean.TRUE);
-    	response.setUser(userResponse); 	
-    	return response;
-    }
-    
-    private void sendEmailToAdmin(String to, String email) {
-        SimpleMailMessage mail = new SimpleMailMessage();
-        mail.setTo(to);
-        mail.setSubject("New Account is pending for approval.");
-        mail.setText("Please arppove new account -" +email );
-        mailSender.send(mail);
-    }
+			if (!SecurityUtils.verifyPasssword(request.getPassword(), user.getPassword())) {
+				response.setIsSuccess(Boolean.FALSE);
+				response.setErrorMessage("Incorrect Password");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+			}
+
+			String otpCode = otpService.generateAndStoreOtp(request.getEmail(), 15);
+			// String jwt = jwtService.generateToken(authentication.getName());
+			// String jwtToken = jwtService.generateToken(request.getEmail());
+
+			// LoginResponse loginResponse = convert(user,jwtToken);
+
+			// return ResponseEntity.ok(loginResponse);
+			// Send email
+			sendOtpByEmail(request.getEmail(), otpCode);
+			return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body("Please check your email for OTP");
+
+		} catch (BadCredentialsException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
+		}
+	}
+
+	@PostMapping("/verify-otp")
+	public ResponseEntity<?> verifyOtp(@RequestBody OtpRequest request) {
+		try {
+			// Authenticate the user
+//            Authentication authentication = authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(
+//                    request.getEmail(), request.getPassword()
+//                )
+//            );
+
+			LoginResponse response = new LoginResponse();
+			UserEntity user = userRepo.findByEmail(request.getEmail())
+					.orElseThrow(() -> new RuntimeException("User not found"));
+
+			if (otpService.validateOtp(request.getEmail(), request.getOtp())) {
+
+				String jwtToken = jwtService.generateToken(request.getEmail());
+
+				LoginResponse loginResponse = convert(user, jwtToken);
+				return ResponseEntity.status(HttpStatus.OK).body(loginResponse);
+			}
+
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please enter valid OTP");
+
+		} catch (BadCredentialsException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP.");
+		}
+	}
+
+	private LoginResponse convert(UserEntity user, String jwtToken) {
+		LoginResponse response = new LoginResponse();
+		CreateUserRequest userResponse = new CreateUserRequest();
+		userResponse.setFirstName(user.getFirstName());
+		userResponse.setLastName(user.getLastName());
+		userResponse.setRole(user.getRole());
+		userResponse.setVendorCode(user.getVendorCode());
+		response.setToken(jwtToken);
+		response.setIsSuccess(Boolean.TRUE);
+		response.setUser(userResponse);
+		return response;
+	}
+
+	private void sendEmailToAdmin(String to, String email) {
+		SimpleMailMessage mail = new SimpleMailMessage();
+		mail.setTo(to);
+		mail.setSubject("New Account is pending for approval.");
+		mail.setText("Please arppove new account -" + email);
+		mailSender.send(mail);
+	}
+
+	private void sendOtpByEmail(String to, String otpCode) {
+		SimpleMailMessage mail = new SimpleMailMessage();
+		mail.setTo(to);
+		mail.setSubject("Otp");
+		mail.setText("Otp Code: " + otpCode);
+		mailSender.send(mail);
+	}
 }
