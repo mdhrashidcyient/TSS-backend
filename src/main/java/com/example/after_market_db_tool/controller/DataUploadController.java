@@ -3,6 +3,7 @@ package com.example.after_market_db_tool.controller;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.time.LocalDate;
@@ -35,6 +36,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
@@ -47,6 +49,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.after_market_db_tool.entity.CurrentWeekOpenOrder;
 import com.example.after_market_db_tool.entity.OtdData;
@@ -109,21 +112,61 @@ public class DataUploadController {
 		return "OK";
 	}
 
-	@GetMapping("/uploadWklyOpenOrderData")
-	public String uploadWklyOrderData() throws InvalidFormatException, EncryptedDocumentException,
-			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
-		afterMarketDBToolService.refreshDBWithWIPData("C:/Users/mr69509/Downloads/Weekly Data.xlsx");
-		afterMarketDBToolService.saveDataIntoWklyOpenOrder();
-		return "OK";
-	}
+//	@GetMapping("/uploadWklyOpenOrderData")
+//	public String uploadWklyOrderData() throws InvalidFormatException, EncryptedDocumentException,
+//			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+//		afterMarketDBToolService.refreshDBWithWIPData("C:/Users/mr69509/Downloads/Weekly Data.xlsx");
+//		afterMarketDBToolService.saveDataIntoWklyOpenOrder();
+//		return "OK";
+//	}
+	
+	@PostMapping("/uploadWklyOpenOrderData")
+    public ResponseEntity<String> uploadWklyOpenOrderData(@RequestParam("file") MultipartFile file) throws InvalidFormatException, EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+        if (file.isEmpty()) {
+            return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
+        }
+        
 
-	@GetMapping("/uploadWklyOtdData")
-	public String uploadWklyOtdData() throws InvalidFormatException, EncryptedDocumentException,
-			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
-		afterMarketDBToolService.uploadOtdData("C:/Users/mr69509/Downloads/BW_OTD_Data.xlsx");
 
-		return "Successfully uploaded OTD data";
-	}
+        try (InputStream is = file.getInputStream()) {
+           
+            
+        	afterMarketDBToolService.refreshDBWithWIPData(file.getInputStream());
+        	afterMarketDBToolService.saveDataIntoWklyOpenOrder();
+            return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Failed to process the file: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+	
+	@PostMapping("/uploadWklyOtdData")
+    public ResponseEntity<String> uploadWklyOtdData(@RequestParam("file") MultipartFile file) throws InvalidFormatException, EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+        if (file.isEmpty()) {
+            return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
+        }
+        
+        
+        try (InputStream is = file.getInputStream()) {           
+            
+        	afterMarketDBToolService.uploadOtdData(file.getInputStream());
+            return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Failed to process the file: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+//	@GetMapping("/uploadWklyOtdData")
+//	public String uploadWklyOtdData() throws InvalidFormatException, EncryptedDocumentException,
+//			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+//		afterMarketDBToolService.uploadOtdData("C:/Users/mr69509/Downloads/BW_OTD_Data.xlsx");
+//
+//		return "Successfully uploaded OTD data";
+//	}
 
 	@GetMapping("/uploadPrevOpenOrderData")
 	public String uploadPrevOpenOrderData() throws InvalidFormatException, EncryptedDocumentException,
