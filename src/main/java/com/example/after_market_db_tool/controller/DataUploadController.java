@@ -80,6 +80,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping("/api/aftermarket")
 @CrossOrigin(origins = "http://localhost:51648")
+
 public class DataUploadController {
 
 	@Autowired
@@ -168,19 +169,56 @@ public class DataUploadController {
 //		return "Successfully uploaded OTD data";
 //	}
 
-	@GetMapping("/uploadPrevOpenOrderData")
-	public String uploadPrevOpenOrderData() throws InvalidFormatException, EncryptedDocumentException,
-			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException {
-		afterMarketDBToolService.uploadPrevOpenOrderData("C:/Users/mr69509/Downloads/Prev-Open-Order-v6.xlsx");
-		return "Open Order Data Copied";
-	}
+//	@GetMapping("/uploadPrevOpenOrderData")
+//	public String uploadPrevOpenOrderData() throws InvalidFormatException, EncryptedDocumentException,
+//			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException {
+//		afterMarketDBToolService.uploadPrevOpenOrderData("C:/Users/mr69509/Downloads/Prev-Open-Order-v6.xlsx");
+//		return "Open Order Data Copied";
+//	}
+	
+	@PostMapping("/uploadPrevOpenOrderData")
+    public ResponseEntity<String> uploadPrevOpenOrderData(@RequestParam("file") MultipartFile file) throws InvalidFormatException, EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+        if (file.isEmpty()) {
+            return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
+        }
+        
+        
+        try (InputStream is = file.getInputStream()) {           
+            
+        	afterMarketDBToolService.uploadPrevOpenOrderData(file.getInputStream());
+            return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
 
-	@GetMapping("/uploadPrevWeekAnalystData")
-	public String uploadPrevWeekAnalystData() throws InvalidFormatException, EncryptedDocumentException,
-			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException {
-		afterMarketDBToolService.uploadPrevWeekAnalystData("C:/Users/mr69509/Downloads/Analystcomments.xlsx");
-		return "Open Order Data Copied";
-	}
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Failed to process the file: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+//	@GetMapping("/uploadPrevWeekAnalystData")
+//	public String uploadPrevWeekAnalystData() throws InvalidFormatException, EncryptedDocumentException,
+//			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException {
+//		afterMarketDBToolService.uploadPrevWeekAnalystData("C:/Users/mr69509/Downloads/Analystcomments.xlsx");
+//		return "Open Order Data Copied";
+//	}
+	
+	@PostMapping("/uploadPrevWeekAnalystData")
+    public ResponseEntity<String> uploadPrevWeekAnalystData(@RequestParam("file") MultipartFile file) throws InvalidFormatException, EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+        if (file.isEmpty()) {
+            return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
+        }
+        
+        
+        try (InputStream is = file.getInputStream()) {           
+            
+        	afterMarketDBToolService.uploadPrevWeekAnalystData(file.getInputStream());
+            return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Failed to process the file: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 	@GetMapping("/by-analyst")
 	public ResponseEntity<List<CurrentWeekOpenOrder>> getWklyOpenOrderByCyientAnalyst(@RequestParam String analyst) {
