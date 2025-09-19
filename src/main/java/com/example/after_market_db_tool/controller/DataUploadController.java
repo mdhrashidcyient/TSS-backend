@@ -79,7 +79,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/aftermarket")
-@CrossOrigin(origins = "http://localhost:51648")
+//@CrossOrigin(origins = "http://localhost:51648")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 
 public class DataUploadController {
 
