@@ -38,7 +38,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:51648")
+//@CrossOrigin(origins = "*", allowedHeaders = "*")
+@CrossOrigin(origins = "http://tooling.cyient.com")
 public class AuthController {
 
 	@Value("${admin.email}")
