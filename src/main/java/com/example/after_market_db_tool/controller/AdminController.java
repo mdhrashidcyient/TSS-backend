@@ -25,7 +25,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping("/api/admin")
 //@CrossOrigin(origins = "*", allowedHeaders = "*")
-@CrossOrigin(origins = "http://tooling.cyient.com")
+@CrossOrigin(origins = "http://tooling.cyient.com/")
 
 public class AdminController {
 	@Autowired

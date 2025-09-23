@@ -79,7 +79,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/aftermarket")
-@CrossOrigin(origins = "http://tooling.cyient.com")
+@CrossOrigin(origins = "http://tooling.cyient.com/")
 //@CrossOrigin(origins = "*", allowedHeaders = "*")
 
 public class DataUploadController {
