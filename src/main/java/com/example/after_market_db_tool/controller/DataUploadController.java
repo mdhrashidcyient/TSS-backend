@@ -108,10 +108,23 @@ public class DataUploadController {
 	@Autowired
 	private JavaMailSender mailSender;
 
-	@GetMapping("/uploadAfterMarketVendorData")
-	public String uploadAfterVendormarketData() {
-		loadDataToPostGres.uploadDataToPostGres();
-		return "OK";
+	@PostMapping("/uploadAfterMarketVendorData")
+	public ResponseEntity<String> uploadAfterVendormarketData(@RequestParam("file") MultipartFile file)
+			throws InvalidFormatException, EncryptedDocumentException,
+			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+		if (file.isEmpty()) {
+			return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
+		}
+
+		try (InputStream is = file.getInputStream()) {
+			loadDataToPostGres.uploadDataToPostGres(file);
+			return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Failed to process the file: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
 	}
 
 //	@GetMapping("/uploadWklyOpenOrderData")
@@ -121,46 +134,47 @@ public class DataUploadController {
 //		afterMarketDBToolService.saveDataIntoWklyOpenOrder();
 //		return "OK";
 //	}
-	
+
 	@PostMapping("/uploadWklyOpenOrderData")
-    public ResponseEntity<String> uploadWklyOpenOrderData(@RequestParam("file") MultipartFile file) throws InvalidFormatException, EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
-        if (file.isEmpty()) {
-            return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
-        }
-        
+	public ResponseEntity<String> uploadWklyOpenOrderData(@RequestParam("file") MultipartFile file)
+			throws InvalidFormatException, EncryptedDocumentException,
+			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+		if (file.isEmpty()) {
+			return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
+		}
 
+		try (InputStream is = file.getInputStream()) {
 
-        try (InputStream is = file.getInputStream()) {
-           
-            
-        	afterMarketDBToolService.refreshDBWithWIPData(file.getInputStream());
-        	afterMarketDBToolService.saveDataIntoWklyOpenOrder();
-            return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
+			afterMarketDBToolService.refreshDBWithWIPData(file.getInputStream());
+			afterMarketDBToolService.saveDataIntoWklyOpenOrder();
+			return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("Failed to process the file: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-	
+		} catch (IOException e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Failed to process the file: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	@PostMapping("/uploadWklyOtdData")
-    public ResponseEntity<String> uploadWklyOtdData(@RequestParam("file") MultipartFile file) throws InvalidFormatException, EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
-        if (file.isEmpty()) {
-            return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
-        }
-        
-        
-        try (InputStream is = file.getInputStream()) {           
-            
-        	afterMarketDBToolService.uploadOtdData(file.getInputStream());
-            return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
+	public ResponseEntity<String> uploadWklyOtdData(@RequestParam("file") MultipartFile file)
+			throws InvalidFormatException, EncryptedDocumentException,
+			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+		if (file.isEmpty()) {
+			return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
+		}
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("Failed to process the file: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+		try (InputStream is = file.getInputStream()) {
 
+			afterMarketDBToolService.uploadOtdData(file.getInputStream());
+			return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Failed to process the file: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 //	@GetMapping("/uploadWklyOtdData")
 //	public String uploadWklyOtdData() throws InvalidFormatException, EncryptedDocumentException,
@@ -176,25 +190,26 @@ public class DataUploadController {
 //		afterMarketDBToolService.uploadPrevOpenOrderData("C:/Users/mr69509/Downloads/Prev-Open-Order-v6.xlsx");
 //		return "Open Order Data Copied";
 //	}
-	
+
 	@PostMapping("/uploadPrevOpenOrderData")
-    public ResponseEntity<String> uploadPrevOpenOrderData(@RequestParam("file") MultipartFile file) throws InvalidFormatException, EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
-        if (file.isEmpty()) {
-            return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
-        }
-        
-        
-        try (InputStream is = file.getInputStream()) {           
-            
-        	afterMarketDBToolService.uploadPrevOpenOrderData(file.getInputStream());
-            return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
+	public ResponseEntity<String> uploadPrevOpenOrderData(@RequestParam("file") MultipartFile file)
+			throws InvalidFormatException, EncryptedDocumentException,
+			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+		if (file.isEmpty()) {
+			return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
+		}
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("Failed to process the file: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+		try (InputStream is = file.getInputStream()) {
 
+			afterMarketDBToolService.uploadPrevOpenOrderData(file.getInputStream());
+			return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Failed to process the file: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 //	@GetMapping("/uploadPrevWeekAnalystData")
 //	public String uploadPrevWeekAnalystData() throws InvalidFormatException, EncryptedDocumentException,
@@ -202,24 +217,26 @@ public class DataUploadController {
 //		afterMarketDBToolService.uploadPrevWeekAnalystData("C:/Users/mr69509/Downloads/Analystcomments.xlsx");
 //		return "Open Order Data Copied";
 //	}
-	
-	@PostMapping("/uploadPrevWeekAnalystData")
-    public ResponseEntity<String> uploadPrevWeekAnalystData(@RequestParam("file") MultipartFile file) throws InvalidFormatException, EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
-        if (file.isEmpty()) {
-            return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
-        }
-        
-        
-        try (InputStream is = file.getInputStream()) {           
-            
-        	afterMarketDBToolService.uploadPrevWeekAnalystData(file.getInputStream());
-            return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("Failed to process the file: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+	@PostMapping("/uploadPrevWeekAnalystData")
+	public ResponseEntity<String> uploadPrevWeekAnalystData(@RequestParam("file") MultipartFile file)
+			throws InvalidFormatException, EncryptedDocumentException,
+			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
+		if (file.isEmpty()) {
+			return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
+		}
+
+		try (InputStream is = file.getInputStream()) {
+
+			afterMarketDBToolService.uploadPrevWeekAnalystData(file.getInputStream());
+			return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Failed to process the file: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 	@GetMapping("/by-analyst")
 	public ResponseEntity<List<CurrentWeekOpenOrder>> getWklyOpenOrderByCyientAnalyst(@RequestParam String analyst) {
@@ -438,7 +455,6 @@ public class DataUploadController {
 				.filter(obj -> !obj.getGrDate().isBefore(firstDayLastYear) && !obj.getGrDate().isAfter(lastDayOfMonth))
 				.collect(Collectors.groupingBy(SupplierScoreCard::getVendorName, Collectors.counting()));
 
-		
 		List<SupplierScoreCardModel> sscList = new ArrayList<SupplierScoreCardModel>();
 
 		for (i = 2; i < sscSheet.getLastRowNum(); i++) {
@@ -447,11 +463,11 @@ public class DataUploadController {
 				System.out.println(sscSheet.getRow(i).getCell(0).getStringCellValue());
 				Long onTimeValue = ontime.get(sscSheet.getRow(i).getCell(0).getStringCellValue());
 				Long lateValue = late.get(sscSheet.getRow(i).getCell(0).getStringCellValue());
-				//column 77
+				// column 77
 				Long tmraOneTineValue = tmraOntime.get(sscSheet.getRow(i).getCell(0).getStringCellValue());
 				Long tmraTotal = total.get(sscSheet.getRow(i).getCell(0).getStringCellValue());
-				
-				//Creating obj for copy suppler score card to weekly supplier score card
+
+				// Creating obj for copy suppler score card to weekly supplier score card
 				SupplierScoreCardModel obj = new SupplierScoreCardModel();
 				obj.setVendorName(sscSheet.getRow(i).getCell(0).getStringCellValue());
 				obj.setCell_1(sscSheet.getRow(i).getCell(1).getStringCellValue());
@@ -478,39 +494,36 @@ public class DataUploadController {
 				obj.setCell_22(sscSheet.getRow(i).getCell(22).getStringCellValue());
 				obj.setCell_23(sscSheet.getRow(i).getCell(23).getStringCellValue());
 				obj.setCell_24(sscSheet.getRow(i).getCell(24).getStringCellValue());
-				
 
-				
-				if(tmraOneTineValue == null && tmraTotal == null) {
+				if (tmraOneTineValue == null && tmraTotal == null) {
 					sscSheet.getRow(i).getCell(77).setCellValue("No Activity");
 					obj.setThirtheenMonthRollingAvg("No Activity");
-				} else if (tmraOneTineValue == null && tmraTotal != null ) {
+				} else if (tmraOneTineValue == null && tmraTotal != null) {
 					sscSheet.getRow(i).getCell(77).setCellValue("0%");
 					obj.setThirtheenMonthRollingAvg("0%");
-				} else if(tmraOneTineValue != null && tmraTotal != null) {
-					
-					double result = (tmraOneTineValue*100)/tmraTotal;
-					sscSheet.getRow(i).getCell(77).setCellValue(result+"%");					
-					obj.setRollingAvg(result);	
-					obj.setThirtheenMonthRollingAvg(result+"%");
+				} else if (tmraOneTineValue != null && tmraTotal != null) {
+
+					double result = (tmraOneTineValue * 100) / tmraTotal;
+					sscSheet.getRow(i).getCell(77).setCellValue(result + "%");
+					obj.setRollingAvg(result);
+					obj.setThirtheenMonthRollingAvg(result + "%");
 				}
-				
-				
-				//column 73-76
+
+				// column 73-76
 				if (onTimeValue != null) {
 					sscSheet.getRow(i).getCell(73).setCellValue(onTimeValue);
-					obj.setGrandTotalOnTime(onTimeValue+"");
+					obj.setGrandTotalOnTime(onTimeValue + "");
 				} else {
 					sscSheet.getRow(i).getCell(73).setCellValue(0);
-					obj.setGrandTotalOnTime(0+"");
+					obj.setGrandTotalOnTime(0 + "");
 				}
 
 				if (lateValue != null) {
 					sscSheet.getRow(i).getCell(74).setCellValue(lateValue);
-					obj.setGrandTotalLate(lateValue+"");
+					obj.setGrandTotalLate(lateValue + "");
 				} else {
 					sscSheet.getRow(i).getCell(74).setCellValue(0);
-					obj.setGrandTotalLate(0+"");
+					obj.setGrandTotalLate(0 + "");
 				}
 
 				if (lateValue != null && onTimeValue != null) {
@@ -518,80 +531,78 @@ public class DataUploadController {
 					sscSheet.getRow(i).getCell(75).setCellValue(ytdTotalOtd + "%");
 					obj.setYtdTotal(ytdTotalOtd + "%");
 					sscSheet.getRow(i).getCell(76).setCellValue(onTimeValue + lateValue);
-					obj.setGrandTotal((onTimeValue + lateValue)+"");
+					obj.setGrandTotal((onTimeValue + lateValue) + "");
 
 				} else if (onTimeValue == null && lateValue != null) {
 					sscSheet.getRow(i).getCell(75).setCellValue("0%");
 					obj.setYtdTotal("0%");
 					sscSheet.getRow(i).getCell(76).setCellValue(0 + lateValue);
-					obj.setGrandTotal((0 + lateValue)+"");
+					obj.setGrandTotal((0 + lateValue) + "");
 				} else if (onTimeValue != null && lateValue == null) {
 					sscSheet.getRow(i).getCell(75).setCellValue("100%");
 					obj.setYtdTotal("100%");
 					sscSheet.getRow(i).getCell(76).setCellValue(onTimeValue + 0);
-					obj.setGrandTotal((onTimeValue + 0)+"");
+					obj.setGrandTotal((onTimeValue + 0) + "");
 				} else {
 					sscSheet.getRow(i).getCell(75).setCellValue("No Activity");
 					obj.setYtdTotal("No Activity");
 				}
-				
+
 				sscList.add(obj);
-			}		
-		
+			}
+
 		}
-		
-		
-		//sorting obj based on Rolling avg
-		List<SupplierScoreCardModel> sortedList= sscList.stream()
-				 .sorted(Comparator.comparing(SupplierScoreCardModel::getRollingAvg).reversed())
-		            .collect(Collectors.toList());
-		
+
+		// sorting obj based on Rolling avg
+		List<SupplierScoreCardModel> sortedList = sscList.stream()
+				.sorted(Comparator.comparing(SupplierScoreCardModel::getRollingAvg).reversed())
+				.collect(Collectors.toList());
+
 		sortedList.forEach(System.out::println);
-		
-		
-		//Get the current month in Weekly supplier score card
+
+		// Get the current month in Weekly supplier score card
 		Sheet wspcSheet = workbook.getSheetAt(0);
 
-        // Get the month name in full (e.g., "September")
-        String monthName = today.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-        wspcSheet.getRow(1).getCell(30).setCellValue(monthName+" on time");
-        wspcSheet.getRow(1).getCell(31).setCellValue(monthName+" Late");
+		// Get the month name in full (e.g., "September")
+		String monthName = today.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+		wspcSheet.getRow(1).getCell(30).setCellValue(monthName + " on time");
+		wspcSheet.getRow(1).getCell(31).setCellValue(monthName + " Late");
 
 		// copy from supplier score card to weekly supplier score card
 		System.out.println(wspcSheet.getFirstRowNum());
-		
-		for (i = 0; i < sortedList.size(); i++) {			
-			
-			wspcSheet.getRow(i+2).getCell(0).setCellValue(sortedList.get(i).getVendorName());
-			wspcSheet.getRow(i+2).getCell(1).setCellValue(sortedList.get(i).getCell_1());
-			wspcSheet.getRow(i+2).getCell(2).setCellValue(sortedList.get(i).getCell_2());
-			wspcSheet.getRow(i+2).getCell(3).setCellValue(sortedList.get(i).getCell_3());
-			wspcSheet.getRow(i+2).getCell(4).setCellValue(sortedList.get(i).getCell_4());
-			wspcSheet.getRow(i+2).getCell(5).setCellValue(sortedList.get(i).getCell_5());
-			wspcSheet.getRow(i+2).getCell(6).setCellValue(sortedList.get(i).getCell_6());
-			wspcSheet.getRow(i+2).getCell(7).setCellValue(sortedList.get(i).getCell_7());
-			wspcSheet.getRow(i+2).getCell(8).setCellValue(sortedList.get(i).getCell_8());
-			wspcSheet.getRow(i+2).getCell(9).setCellValue(sortedList.get(i).getCell_9());
-			wspcSheet.getRow(i+2).getCell(10).setCellValue(sortedList.get(i).getCell_10());
-			wspcSheet.getRow(i+2).getCell(11).setCellValue(sortedList.get(i).getCell_11());
-			wspcSheet.getRow(i+2).getCell(12).setCellValue(sortedList.get(i).getCell_12());
-			wspcSheet.getRow(i+2).getCell(13).setCellValue(sortedList.get(i).getCell_13());
-			wspcSheet.getRow(i+2).getCell(14).setCellValue(sortedList.get(i).getCell_14());
-			wspcSheet.getRow(i+2).getCell(15).setCellValue(sortedList.get(i).getCell_15());
-			wspcSheet.getRow(i+2).getCell(16).setCellValue(sortedList.get(i).getCell_16());
-			wspcSheet.getRow(i+2).getCell(17).setCellValue(sortedList.get(i).getCell_17());
-			wspcSheet.getRow(i+2).getCell(18).setCellValue(sortedList.get(i).getCell_18());
-			wspcSheet.getRow(i+2).getCell(19).setCellValue(sortedList.get(i).getCell_19());
-			wspcSheet.getRow(i+2).getCell(20).setCellValue(sortedList.get(i).getCell_20());
-			wspcSheet.getRow(i+2).getCell(21).setCellValue(sortedList.get(i).getCell_21());
-			wspcSheet.getRow(i+2).getCell(22).setCellValue(sortedList.get(i).getCell_22());
-			wspcSheet.getRow(i+2).getCell(23).setCellValue(sortedList.get(i).getCell_23());
-			wspcSheet.getRow(i+2).getCell(24).setCellValue(sortedList.get(i).getCell_24());
-			wspcSheet.getRow(i+2).getCell(25).setCellValue(sortedList.get(i).getGrandTotalOnTime());
-			wspcSheet.getRow(i+2).getCell(26).setCellValue(sortedList.get(i).getGrandTotalLate());
-			wspcSheet.getRow(i+2).getCell(27).setCellValue(sortedList.get(i).getYtdTotal());
-			wspcSheet.getRow(i+2).getCell(28).setCellValue(sortedList.get(i).getGrandTotal());
-			wspcSheet.getRow(i+2).getCell(29).setCellValue(sortedList.get(i).getThirtheenMonthRollingAvg());	
+
+		for (i = 0; i < sortedList.size(); i++) {
+
+			wspcSheet.getRow(i + 2).getCell(0).setCellValue(sortedList.get(i).getVendorName());
+			wspcSheet.getRow(i + 2).getCell(1).setCellValue(sortedList.get(i).getCell_1());
+			wspcSheet.getRow(i + 2).getCell(2).setCellValue(sortedList.get(i).getCell_2());
+			wspcSheet.getRow(i + 2).getCell(3).setCellValue(sortedList.get(i).getCell_3());
+			wspcSheet.getRow(i + 2).getCell(4).setCellValue(sortedList.get(i).getCell_4());
+			wspcSheet.getRow(i + 2).getCell(5).setCellValue(sortedList.get(i).getCell_5());
+			wspcSheet.getRow(i + 2).getCell(6).setCellValue(sortedList.get(i).getCell_6());
+			wspcSheet.getRow(i + 2).getCell(7).setCellValue(sortedList.get(i).getCell_7());
+			wspcSheet.getRow(i + 2).getCell(8).setCellValue(sortedList.get(i).getCell_8());
+			wspcSheet.getRow(i + 2).getCell(9).setCellValue(sortedList.get(i).getCell_9());
+			wspcSheet.getRow(i + 2).getCell(10).setCellValue(sortedList.get(i).getCell_10());
+			wspcSheet.getRow(i + 2).getCell(11).setCellValue(sortedList.get(i).getCell_11());
+			wspcSheet.getRow(i + 2).getCell(12).setCellValue(sortedList.get(i).getCell_12());
+			wspcSheet.getRow(i + 2).getCell(13).setCellValue(sortedList.get(i).getCell_13());
+			wspcSheet.getRow(i + 2).getCell(14).setCellValue(sortedList.get(i).getCell_14());
+			wspcSheet.getRow(i + 2).getCell(15).setCellValue(sortedList.get(i).getCell_15());
+			wspcSheet.getRow(i + 2).getCell(16).setCellValue(sortedList.get(i).getCell_16());
+			wspcSheet.getRow(i + 2).getCell(17).setCellValue(sortedList.get(i).getCell_17());
+			wspcSheet.getRow(i + 2).getCell(18).setCellValue(sortedList.get(i).getCell_18());
+			wspcSheet.getRow(i + 2).getCell(19).setCellValue(sortedList.get(i).getCell_19());
+			wspcSheet.getRow(i + 2).getCell(20).setCellValue(sortedList.get(i).getCell_20());
+			wspcSheet.getRow(i + 2).getCell(21).setCellValue(sortedList.get(i).getCell_21());
+			wspcSheet.getRow(i + 2).getCell(22).setCellValue(sortedList.get(i).getCell_22());
+			wspcSheet.getRow(i + 2).getCell(23).setCellValue(sortedList.get(i).getCell_23());
+			wspcSheet.getRow(i + 2).getCell(24).setCellValue(sortedList.get(i).getCell_24());
+			wspcSheet.getRow(i + 2).getCell(25).setCellValue(sortedList.get(i).getGrandTotalOnTime());
+			wspcSheet.getRow(i + 2).getCell(26).setCellValue(sortedList.get(i).getGrandTotalLate());
+			wspcSheet.getRow(i + 2).getCell(27).setCellValue(sortedList.get(i).getYtdTotal());
+			wspcSheet.getRow(i + 2).getCell(28).setCellValue(sortedList.get(i).getGrandTotal());
+			wspcSheet.getRow(i + 2).getCell(29).setCellValue(sortedList.get(i).getThirtheenMonthRollingAvg());
 
 		}
 

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.after_market_db_tool.entity.Otp;
 import com.example.after_market_db_tool.entity.UserEntity;
 import com.example.after_market_db_tool.entity.VerificationToken;
 import com.example.after_market_db_tool.model.CreateUserRequest;
@@ -130,6 +131,12 @@ public class AuthController {
 //                    request.getEmail(), request.getPassword()
 //                )
 //            );
+			
+			Otp otp = otpService.getOtpById(request.getEmail());
+			
+			if(otp!= null){
+				otpService.deleteOtp(otp);
+			}
 
 			LoginResponse response = new LoginResponse();
 
