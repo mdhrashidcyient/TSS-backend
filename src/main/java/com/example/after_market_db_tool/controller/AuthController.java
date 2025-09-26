@@ -203,6 +203,7 @@ public class AuthController {
 		CreateUserRequest userResponse = new CreateUserRequest();
 		userResponse.setFirstName(user.getFirstName());
 		userResponse.setLastName(user.getLastName());
+		userResponse.setEmail(user.getEmail());
 		userResponse.setRole(user.getRole());
 		userResponse.setVendorCode(user.getVendorCode());
 		response.setToken(jwtToken);

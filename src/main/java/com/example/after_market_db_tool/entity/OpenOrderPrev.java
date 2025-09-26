@@ -2,6 +2,7 @@ package com.example.after_market_db_tool.entity;
 
 import java.util.Date;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -42,7 +43,9 @@ public class OpenOrderPrev {
 	private int itemQuantity;
 	private int gRQuantity;
 	private int openQuantity;
+	@Column(columnDefinition = "TEXT")
 	private String prevSupplierComments;
+	@Column(columnDefinition = "TEXT")
 	private String currentSupplierComments;
 	private String pOReceived;
 	private String supplierInternalCode;

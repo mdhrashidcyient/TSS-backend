@@ -9,6 +9,7 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
@@ -35,6 +36,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -53,8 +55,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.after_market_db_tool.entity.CurrentWeekOpenOrder;
 import com.example.after_market_db_tool.entity.OtdData;
+import com.example.after_market_db_tool.entity.OtdDataRefreshRecord;
 import com.example.after_market_db_tool.entity.UserEntity;
 import com.example.after_market_db_tool.entity.VerificationToken;
+import com.example.after_market_db_tool.entity.WipDataRefreshRecord;
 import com.example.after_market_db_tool.model.CreateUserRequest;
 import com.example.after_market_db_tool.model.CurrentTools;
 import com.example.after_market_db_tool.model.OpenOrders;
@@ -63,9 +67,11 @@ import com.example.after_market_db_tool.model.SupplierScoreCard;
 import com.example.after_market_db_tool.model.SupplierScoreCardModel;
 import com.example.after_market_db_tool.repository.CurrentTool;
 import com.example.after_market_db_tool.repository.OpenOrder;
+import com.example.after_market_db_tool.repository.OtdDataRefreshRecordRepository;
 import com.example.after_market_db_tool.repository.OtdDataRepository;
 import com.example.after_market_db_tool.repository.UserRepository;
 import com.example.after_market_db_tool.repository.VerificationRepository;
+import com.example.after_market_db_tool.repository.WipDataRefreshRecordRepository;
 import com.example.after_market_db_tool.repository.WklyOpenOrderRepository;
 import com.example.after_market_db_tool.security.SecurityUtils;
 import com.example.after_market_db_tool.service.AfterMarketDBToolService;
@@ -104,6 +110,12 @@ public class DataUploadController {
 
 	@Autowired
 	private OtdDataRepository otdDataRepository;
+	
+	@Autowired
+	private WipDataRefreshRecordRepository wipDtaRefreshRecordRepository;
+	
+	@Autowired
+	private OtdDataRefreshRecordRepository otdDtaRefreshRecordRepository;
 
 	@Autowired
 	private JavaMailSender mailSender;
@@ -136,17 +148,22 @@ public class DataUploadController {
 //	}
 
 	@PostMapping("/uploadWklyOpenOrderData")
-	public ResponseEntity<String> uploadWklyOpenOrderData(@RequestParam("file") MultipartFile file)
+	public ResponseEntity<String> uploadWklyOpenOrderData(@RequestParam("file") MultipartFile file,  @RequestParam("userId") String userId)
 			throws InvalidFormatException, EncryptedDocumentException,
 			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
 		if (file.isEmpty()) {
 			return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
 		}
+		
+		WipDataRefreshRecord obj = new WipDataRefreshRecord();
+		obj.setUserId(userId);
+		obj.setRefreshedAt(getCurrentDateAndTime());
 
 		try (InputStream is = file.getInputStream()) {
 
 			afterMarketDBToolService.refreshDBWithWIPData(file.getInputStream());
 			afterMarketDBToolService.saveDataIntoWklyOpenOrder();
+			wipDtaRefreshRecordRepository.save(obj);
 			return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
 
 		} catch (IOException e) {
@@ -157,16 +174,21 @@ public class DataUploadController {
 	}
 
 	@PostMapping("/uploadWklyOtdData")
-	public ResponseEntity<String> uploadWklyOtdData(@RequestParam("file") MultipartFile file)
+	public ResponseEntity<String> uploadWklyOtdData(@RequestParam("file") MultipartFile file, @RequestParam("userId") String userId)
 			throws InvalidFormatException, EncryptedDocumentException,
 			org.apache.poi.openxml4j.exceptions.InvalidFormatException, IOException, ParseException, SQLException {
 		if (file.isEmpty()) {
 			return new ResponseEntity<>("Please select a file to upload.", HttpStatus.BAD_REQUEST);
 		}
+		
+		OtdDataRefreshRecord obj = new OtdDataRefreshRecord();
+		obj.setUserId(userId);
+		obj.setRefreshedAt(getCurrentDateAndTime());
 
 		try (InputStream is = file.getInputStream()) {
 
 			afterMarketDBToolService.uploadOtdData(file.getInputStream());
+			otdDtaRefreshRecordRepository.save(obj);
 			return new ResponseEntity<>("File uploaded and processed successfully!", HttpStatus.OK);
 
 		} catch (IOException e) {
@@ -281,6 +303,8 @@ public class DataUploadController {
 			order.setLastWeekAnalystComments(updatedOrder.getLastWeekAnalystComments());
 			order.setCurrentWeekAnalystComments(updatedOrder.getCurrentWeekAnalystComments());
 			order.setStatus(updatedOrder.getStatus());
+			order.setCurrentWeekSupplierComments(updatedOrder.getCurrentWeekSupplierComments());
+			
 
 			wklyOpenOrderRepository.save(order);
 			return ResponseEntity.ok(order);
@@ -297,9 +321,10 @@ public class DataUploadController {
 		List<SupplierScoreCard> ssc = new ArrayList<SupplierScoreCard>();
 		Helper helper = new Helper();
 
-		FileInputStream inputStream = new FileInputStream(
-				"C:/Users/mr69509/Downloads/After Market On-Time Delivery 2025.xlsx");
-		Workbook workbook = WorkbookFactory.create(inputStream);
+//		FileInputStream inputStream = new FileInputStream(
+//				"C:/Users/mr69509/Downloads/After Market On-Time Delivery 2025.xlsx");
+		ClassPathResource resource = new ClassPathResource("AfterMarketOnTimeDelivery.xlsx");
+		Workbook workbook = WorkbookFactory.create(resource.getInputStream());
 
 		CreationHelper createHelper = workbook.getCreationHelper();
 		CellStyle cellStyle = workbook.createCellStyle();
@@ -629,9 +654,10 @@ public class DataUploadController {
 		List<OpenOrder> openOrdersList = wklyOpenOrderRepository.getOpenOrdersList();
 		List<CurrentTool> currentToolsList = wklyOpenOrderRepository.getCurrentToolList();
 
-		FileInputStream inputStream = new FileInputStream(
-				"C:/Users/mr69509/Downloads/Supplier Capacity Report 07-21-25.xlsx");
-		Workbook workbook = WorkbookFactory.create(inputStream);
+//		FileInputStream inputStream = new FileInputStream(
+//				"C:/Users/mr69509/Downloads/Supplier Capacity Report 07-21-25.xlsx");
+		ClassPathResource resource = new ClassPathResource("SupplierCapacityReport.xlsx");
+		Workbook workbook = WorkbookFactory.create(resource.getInputStream());
 
 		CreationHelper createHelper = workbook.getCreationHelper();
 		CellStyle cellStyle = workbook.createCellStyle();
@@ -697,6 +723,29 @@ public class DataUploadController {
 		return ResponseEntity.ok().headers(headers).contentLength(excelBytes.length)
 				.contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
 				.body(new ByteArrayResource(excelBytes));
+	}
+	
+    @GetMapping("/wip-last-refresh")
+    public WipDataRefreshRecord getWipDataLastRefresh() {
+        return wipDtaRefreshRecordRepository.findTopByOrderByIdDesc();
+    }
+    
+    @GetMapping("/otd-last-refresh")
+    public OtdDataRefreshRecord getOtdDataLastRefresh() {
+        return otdDtaRefreshRecordRepository.findTopByOrderByIdDesc();
+    }
+    
+	
+	
+	public String getCurrentDateAndTime() {
+		LocalDateTime currentDateTime = LocalDateTime.now();
+       
+
+        // Format the date and time
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+        String formattedDateTime = currentDateTime.format(formatter);
+        
+        return formattedDateTime;
 	}
 
 }
