@@ -29,6 +29,7 @@ import com.example.after_market_db_tool.model.CreateUserRequest;
 import com.example.after_market_db_tool.model.LoginRequest;
 import com.example.after_market_db_tool.model.LoginResponse;
 import com.example.after_market_db_tool.model.OtpRequest;
+import com.example.after_market_db_tool.model.ResetPasswordRequest;
 import com.example.after_market_db_tool.repository.UserRepository;
 import com.example.after_market_db_tool.repository.VerificationRepository;
 import com.example.after_market_db_tool.security.SecurityUtils;
@@ -43,8 +44,8 @@ import jakarta.servlet.http.HttpServletRequest;
 @CrossOrigin(origins = "https://tooling.cyient.com/")
 public class AuthController {
 
-	@Value("${admin.email}")
-	private String adminEmail;
+	@Value("${app.domain}")
+	private String appDomain;
 
 	@Autowired
 	private UserRepository userRepo;
@@ -88,8 +89,8 @@ public class AuthController {
 		tokenRepo.save(verificationToken);
 
 		// Build confirmation URL
-		String appUrl = servletRequest.getRequestURL().toString().replace(servletRequest.getRequestURI(), "");
-		String confirmUrl = appUrl + "/api/auth/confirm?token=" + jwtToekn;
+		//String appUrl = servletRequest.getRequestURL().toString().replace(servletRequest.getRequestURI(), "");
+		String confirmUrl = appDomain + "/api/auth/confirm?token=" + jwtToekn;
 
 		// Send email
 		sendEmail(user.getEmail(), confirmUrl);
@@ -116,6 +117,7 @@ public class AuthController {
 		UserEntity user = vt.getUser();
 		// user.setEnabled(false);
 		// userRepo.save(user);
+		String adminEmail = userRepo.getAdminEmail();
 		sendEmailToAdmin(adminEmail, user.getEmail());
 		tokenRepo.delete(vt);
 
@@ -167,6 +169,30 @@ public class AuthController {
 		} catch (BadCredentialsException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
 		}
+	}
+	
+	@PostMapping("/savePassword")
+	public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+		try {	
+		
+
+			UserEntity user = userRepo.findByEmail(request.getEmail())
+					.orElseThrow(() -> new RuntimeException("User not found"));
+
+			if (!user.isEnabled()) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please confirm your email first.");
+			}
+			
+			String hashedPw = SecurityUtils.saltAndHashPassword(request.getPassword());
+			user.setPassword(hashedPw);
+			userRepo.save(user);
+			
+			return ResponseEntity.status(HttpStatus.OK).body("New Password saved successfully");
+
+		} catch (BadCredentialsException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
+		}
+		
 	}
 
 	@PostMapping("/verify-otp")
