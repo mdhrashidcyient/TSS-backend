@@ -123,6 +123,25 @@ public class AuthController {
 
 		return ResponseEntity.ok("Email confirmed. Awaiting for Admin approval.");
 	}
+	
+	@PostMapping("/generateOtp")
+	public ResponseEntity<?> generateOtp(@RequestBody LoginRequest request) {
+		
+		Otp otp = otpService.getOtpById(request.getEmail());
+		
+		if(otp!= null){
+			otpService.deleteOtp(otp);
+		}
+		UserEntity user = userRepo.findByEmail(request.getEmail())
+				.orElseThrow(() -> new RuntimeException("User not found"));
+		if (!user.isEnabled()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please confirm your email first.");
+		}
+		String otpCode = otpService.generateAndStoreOtp(request.getEmail(), 15);
+		sendOtpByEmail(request.getEmail(), otpCode);
+		return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body("Please check your email for OTP");
+		
+	}
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody LoginRequest request) {
