@@ -31,9 +31,11 @@ public class PrevWeekAnalystReport {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	 private Long id;	
-	 private String poNumber;	 
+	 private String poNumber;	
+	 @Column(columnDefinition = "TEXT")
 	 private String currentWeekAnalystComments;
 	 private String poLineItem;
+	 @Column(columnDefinition = "TEXT")
 	 private String lastWeekAnalystComments;
 	 
 	 public String getPoNumber() {

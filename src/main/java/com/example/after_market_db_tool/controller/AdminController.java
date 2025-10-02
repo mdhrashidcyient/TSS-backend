@@ -1,6 +1,7 @@
 package com.example.after_market_db_tool.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.after_market_db_tool.entity.UserEntity;
 import com.example.after_market_db_tool.model.CreateUserRequest;
+import com.example.after_market_db_tool.model.UserResponse;
 import com.example.after_market_db_tool.repository.UserRepository;
 import com.example.after_market_db_tool.repository.VerificationRepository;
 import com.example.after_market_db_tool.security.SecurityUtils;
@@ -24,7 +26,9 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = "*", allowedHeaders = "*")
+//@CrossOrigin(origins = "*", allowedHeaders = "*")
+@CrossOrigin(origins = "https://tooling.cyient.com/")
+
 public class AdminController {
 	@Autowired
 	UserRepository userRepository;
@@ -39,8 +43,12 @@ public class AdminController {
 	
 	
 	@GetMapping("/users")
-	public List<UserEntity> getAllUsers() {
-		return userRepository.findAll();
+	public List<UserResponse> getAllUsers() {
+		List<UserEntity> users = userRepository.findAll();
+        return users.stream()
+            .map(this::convertToDto)
+            .collect(Collectors.toList());
+		
 	}
 
 	@PostMapping("/registerAdmin")
@@ -115,6 +123,24 @@ public class AdminController {
         mail.setSubject("Account is active.Please login.");
         mail.setText("Your account is active now. " );
         mailSender.send(mail);
+    }
+    
+	
+
+    
+    private UserResponse convertToDto(UserEntity user) {
+    	
+        UserResponse dto = new UserResponse();
+        dto.setId(user.getId());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setEmail(user.getEmail());
+        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setCompanyName(user.getCompanyName());
+        dto.setRole(user.getRole());
+        dto.setVendorCode(user.getVendorCode());
+        dto.setEnabled(user.isEnabled());
+        return dto;
     }
     
 

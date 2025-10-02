@@ -2,6 +2,7 @@ package com.example.after_market_db_tool.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -65,9 +66,10 @@ public class AfterMarketDBToolService {
 
 
 
-	public void refreshDBWithWIPData(String excelPath) throws InvalidFormatException, IOException,
+	public void refreshDBWithWIPData(InputStream is) throws InvalidFormatException, IOException,
 			EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, ParseException {
-		Workbook workbook = WorkbookFactory.create(new File(excelPath));
+		
+		Workbook workbook = WorkbookFactory.create(is);
 		String pattern = "MM/dd/yyyy";
 		SimpleDateFormat sdf = new SimpleDateFormat(pattern);
 		Date targetDate = new Date();
@@ -156,9 +158,9 @@ public class AfterMarketDBToolService {
 		return wklyOpenOrderRepository.findByVendorCode(vendorCode);
 	}
 
-	public void uploadPrevOpenOrderData(String excelPath) throws InvalidFormatException, IOException,
+	public void uploadPrevOpenOrderData(InputStream is) throws InvalidFormatException, IOException,
 			EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, ParseException {
-		Workbook workbook = WorkbookFactory.create(new File(excelPath));
+		Workbook workbook = WorkbookFactory.create(is);
 		// String pattern = "MM/dd/yyyy";
 		// SimpleDateFormat sdf = new SimpleDateFormat(pattern);
 		// Date targetDate = new Date();
@@ -339,9 +341,9 @@ public class AfterMarketDBToolService {
 
 	}
 
-	public void uploadPrevWeekAnalystData(String excelPath) throws InvalidFormatException, IOException,
+	public void uploadPrevWeekAnalystData(InputStream is) throws InvalidFormatException, IOException,
 			EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, ParseException {
-		Workbook workbook = WorkbookFactory.create(new File(excelPath));
+		Workbook workbook = WorkbookFactory.create(is);
 
 		// prevWeekAnalystReportRepository.deleteAll();
 
@@ -387,9 +389,9 @@ public class AfterMarketDBToolService {
 
 	}
 
-	public void uploadOtdData(String excelPath) throws InvalidFormatException, IOException,
+	public void uploadOtdData(InputStream is) throws InvalidFormatException, IOException,
 			EncryptedDocumentException, org.apache.poi.openxml4j.exceptions.InvalidFormatException, ParseException {
-		Workbook workbook = WorkbookFactory.create(new File(excelPath));
+		Workbook workbook = WorkbookFactory.create(is);
 
 		otdDataRepository.deleteAll();
 

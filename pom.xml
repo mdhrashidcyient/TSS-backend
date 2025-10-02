@@ -138,6 +138,7 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>after-market-db-tool</finalName>
 	</build>
 
 </project>

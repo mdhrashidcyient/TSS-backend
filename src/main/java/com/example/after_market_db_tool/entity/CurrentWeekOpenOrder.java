@@ -50,14 +50,18 @@ public class CurrentWeekOpenOrder {
 	 private int itemQuantity;
 	 private int  gRQuantity;
 	 private int openQuantity;
-	 private String prevWeekSupplierComments;	 
+	 @Column(columnDefinition = "TEXT")
+	 private String prevWeekSupplierComments;
+	 @Column(columnDefinition = "TEXT")
 	 private String currentWeekSupplierComments;	
 	 private String pOReceived;
 	 private String supplierInternalCode;
 	 private String currentStatisticsDate;
 	 private String cyientAnalyst;
 	 private String sanctionCheck;
+	 @Column(columnDefinition = "TEXT")
 	 private String lastWeekAnalystComments;
+	 @Column(columnDefinition = "TEXT")
 	 private String currentWeekAnalystComments;
 	 private String status;
 	 

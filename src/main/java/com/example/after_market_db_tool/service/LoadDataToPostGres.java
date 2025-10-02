@@ -3,11 +3,15 @@ package com.example.after_market_db_tool.service;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.after_market_db_tool.entity.AfterMarketVendors;
 import com.example.after_market_db_tool.repository.AfterMarketVendorsRepository;
@@ -18,19 +22,16 @@ public class LoadDataToPostGres {
 	@Autowired
 	AfterMarketVendorsRepository repo;
 	
-	public void uploadDataToPostGres() {
+	public void uploadDataToPostGres(MultipartFile file) {
 		
-		String filePath = "C:/Users/mr69509/OneDrive - Cyient Ltd/Documents/amv_data.txt"; 
+		//String filePath = "C:/Users/mr69509/OneDrive - Cyient Ltd/Documents/amv_data.txt"; 
 		BufferedReader reader = null; 
 		
-		try {
-            // Create a FileReader to read from the specified file
-            FileReader fileReader = new FileReader(filePath);
-            
+		try {      
             
 
             // Wrap the FileReader with a BufferedReader for efficient reading
-            reader = new BufferedReader(fileReader);
+            reader = new BufferedReader(new InputStreamReader(file.getInputStream(),StandardCharsets.UTF_8));
             
 
 
